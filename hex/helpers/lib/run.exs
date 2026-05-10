@@ -53,6 +53,12 @@ defmodule DependencyHelper do
     run_script("parse_deps.exs", dir)
   end
 
+  defp run(%{"function" => "dependency_graph", "args" => [dir]}) do
+    helper_mixfile = Path.expand("../dependency_grapher_mix.exs", __DIR__)
+    graph_script = Path.expand("dependency_grapher.exs", __DIR__)
+    run_script(graph_script, dir, [], %{"MIX_EXS" => helper_mixfile})
+  end
+
   defp run(%{
          "function" => "get_latest_resolvable_version",
          "args" => [dir, dependency_name, credentials]
@@ -68,7 +74,7 @@ defmodule DependencyHelper do
     run_script("do_update.exs", dir, [dependency_name])
   end
 
-  defp run_script(script, dir, args \\ []) do
+  defp run_script(script, dir, args \\ [], env \\ %{"MIX_EXS" => nil}) do
     args =
       [
         "run",
@@ -79,7 +85,7 @@ defmodule DependencyHelper do
         script
       ] ++ args
 
-    System.cmd("mix", args, cd: dir, env: %{"MIX_EXS" => nil})
+    System.cmd("mix", args, cd: dir, env: env)
   end
 
   defp set_credentials([]), do: :ok

@@ -26,5 +26,9 @@ esac
 
 cp $CP_OPTS "$helpers_dir/lib" "$install_dir"
 cp $CP_OPTS "$helpers_dir/mix.exs" "$install_dir"
+cp $CP_OPTS "$helpers_dir/dependency_grapher_mix.exs" "$install_dir"
+cp $CP_OPTS "$helpers_dir/mix.lock" "$install_dir"
 
 cd "$install_dir"
+MIX_EXS="$install_dir/dependency_grapher_mix.exs" mix deps.get
+MIX_EXS="$install_dir/dependency_grapher_mix.exs" mix compile

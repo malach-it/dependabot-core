@@ -4,5 +4,6 @@
 /tmp
 /deps
 /helpers/deps/
+/helpers/hex/
 /helpers/install-dir
 /dependabot-*.gem
