@@ -67,6 +67,17 @@ RSpec.describe Dependabot::Hex::DependencyGrapher do
   describe "#resolved_dependencies" do
     subject(:resolved) { grapher.resolved_dependencies }
 
+    let(:dependency_for) do
+      lambda do |name, version|
+        resolved.values.find { |dependency| dependency.package_url.start_with?("pkg:hex/#{name}@#{version}") }
+      end
+    end
+    let(:mime) { dependency_for.call("mime", "1.2.0") }
+    let(:phoenix) { dependency_for.call("phoenix", "1.2.5") }
+    let(:phoenix_pubsub) { dependency_for.call("phoenix_pubsub", "1.0.2") }
+    let(:plug) { dependency_for.call("plug", "1.3.5") }
+    let(:poison) { dependency_for.call("poison", "2.0.1") }
+
     it "returns the correct number of dependencies" do
       expect(resolved.count).to eq(5)
     end
@@ -76,53 +87,43 @@ RSpec.describe Dependabot::Hex::DependencyGrapher do
     end
 
     it "includes direct dependencies as direct" do
-      plug = resolved["pkg:hex/plug@1.3.5"]
       expect(plug).not_to be_nil
       expect(plug.direct).to be(true)
       expect(plug.runtime).to be(true)
 
-      phoenix = resolved["pkg:hex/phoenix@1.2.5"]
       expect(phoenix).not_to be_nil
       expect(phoenix.direct).to be(true)
       expect(phoenix.runtime).to be(true)
     end
 
     it "marks transitive dependencies as indirect" do
-      mime = resolved["pkg:hex/mime@1.2.0"]
       expect(mime).not_to be_nil
       expect(mime.direct).to be(false)
 
-      phoenix_pubsub = resolved["pkg:hex/phoenix_pubsub@1.0.2"]
       expect(phoenix_pubsub).not_to be_nil
       expect(phoenix_pubsub.direct).to be(false)
 
-      poison = resolved["pkg:hex/poison@2.0.1"]
       expect(poison).not_to be_nil
       expect(poison.direct).to be(false)
     end
 
     it "correctly assigns subdependencies for plug" do
-      plug = resolved["pkg:hex/plug@1.3.5"]
-      expect(plug.dependencies).to include("pkg:hex/mime@1.2.0")
+      expect(plug.dependencies).to include(mime.package_url)
     end
 
     it "correctly assigns subdependencies for phoenix" do
-      phoenix = resolved["pkg:hex/phoenix@1.2.5"]
       expect(phoenix.dependencies).to include(
-        "pkg:hex/phoenix_pubsub@1.0.2",
-        "pkg:hex/plug@1.3.5",
-        "pkg:hex/poison@2.0.1"
+        phoenix_pubsub.package_url,
+        plug.package_url,
+        poison.package_url
       )
     end
 
     it "returns empty dependencies for leaf packages" do
-      mime = resolved["pkg:hex/mime@1.2.0"]
       expect(mime.dependencies).to be_empty
 
-      poison = resolved["pkg:hex/poison@2.0.1"]
       expect(poison.dependencies).to be_empty
 
-      phoenix_pubsub = resolved["pkg:hex/phoenix_pubsub@1.0.2"]
       expect(phoenix_pubsub.dependencies).to be_empty
     end
   end

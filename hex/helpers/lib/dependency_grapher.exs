@@ -10,8 +10,6 @@ defmodule DependencyGrapher do
   Generates a CycloneDX BOM for the given project directory and returns a list
   of dependency entries, each with the shape:
     %{purl: "pkg:hex/name@version", direct: bool, runtime: bool, dependencies: ["pkg:hex/..."]}
-
-  PURLs are stripped of qualifiers to match the format used by all other Dependabot graphers.
   """
 
   def run(project_dir) do
@@ -44,7 +42,7 @@ defmodule DependencyGrapher do
       |> MapSet.new()
 
     ref_to_purl =
-      Map.new(bom.components, fn c -> {c.bom_ref, canonical_purl(c.purl)} end)
+      Map.new(bom.components, fn component -> {component.bom_ref, component.purl} end)
 
     result =
       for component <- bom.components do
@@ -58,7 +56,7 @@ defmodule DependencyGrapher do
           |> Enum.reject(&is_nil/1)
 
         %{
-          purl: canonical_purl(component.purl),
+          purl: component.purl,
           direct: MapSet.member?(root_dep_refs, component.bom_ref),
           runtime: component.scope != :SCOPE_EXCLUDED,
           dependencies: child_purls
@@ -66,15 +64,6 @@ defmodule DependencyGrapher do
       end
 
     {:ok, result}
-  end
-
-  # Strip qualifiers and subpath from a PURL string, keeping only
-  # pkg:type/name@version to match the format used by all other Dependabot graphers.
-  defp canonical_purl(purl_str) do
-    case String.split(purl_str, "?", parts: 2) do
-      [base, _qualifiers] -> base
-      [base] -> base
-    end
   end
 end
 
