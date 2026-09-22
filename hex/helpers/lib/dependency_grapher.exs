@@ -15,6 +15,8 @@ defmodule DependencyGrapher do
   """
 
   def run(project_dir) do
+    {:ok, _applications} = Application.ensure_all_started(:sbom)
+
     # Ignore duplicate module warnings when loading the user's mix.exs.
     Code.put_compiler_option(:ignore_module_conflict, true)
 
@@ -29,7 +31,7 @@ defmodule DependencyGrapher do
 
     bom =
       Mix.Project.in_project(app_name, project_dir, fn _module ->
-        SBoM.CycloneDX.bom(system_dependencies: false)
+        SBoM.CycloneDX.bom(system_dependencies: false, version: "1.7")
       end)
 
     root_bom_ref = bom.metadata.component.bom_ref
