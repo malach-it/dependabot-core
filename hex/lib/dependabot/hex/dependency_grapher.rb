@@ -66,7 +66,6 @@ module Dependabot
 
           SharedHelpers.run_helper_subprocess(
             env: {
-              "HEX_OFFLINE" => "1",
               "MIX_BUILD_PATH" => File.join(NativeHelpers.hex_helpers_dir, "_build"),
               "MIX_DEPS_PATH" => File.join(NativeHelpers.hex_helpers_dir, "deps"),
               "MIX_EXS" => File.join(NativeHelpers.hex_helpers_dir, "dependency_grapher_mix.exs"),

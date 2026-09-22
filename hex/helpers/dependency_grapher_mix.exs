@@ -7,7 +7,7 @@ defmodule DependabotDependencyGrapher.MixProject do
       version: "0.1.0",
       elixir: "~> 1.18",
       lockfile: Path.expand("mix.lock", __DIR__),
-      deps: [{:sbom, "~> 0.10.0"}]
+      deps: [{:sbom, "~> 0.11.0"}]
     ]
   end
 end

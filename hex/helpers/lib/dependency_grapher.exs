@@ -29,7 +29,11 @@ defmodule DependencyGrapher do
 
     bom =
       Mix.Project.in_project(app_name, project_dir, fn _module ->
-        SBoM.CycloneDX.bom(system_dependencies: false, version: "1.7")
+        SBoM.CycloneDX.bom(
+          system_dependencies: false,
+          enhance_metadata: false,
+          version: "1.7"
+        )
       end)
 
     root_bom_ref = bom.metadata.component.bom_ref
