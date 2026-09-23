@@ -16,6 +16,12 @@ module Dependabot
         T::Hash[String, T.any(String, T::Boolean, T::Array[String])]
       end
 
+      sig { void }
+      def prepare!
+        @dependencies = []
+        @prepared = true
+      end
+
       sig { override.returns(Dependabot::DependencyFile) }
       def relevant_dependency_file
         lockfile || T.must(mixfile)
@@ -36,19 +42,9 @@ module Dependabot
         end
       end
 
-      sig { override.params(dependency: Dependabot::Dependency).returns(String) }
+      sig { override.params(_dependency: Dependabot::Dependency).returns(String) }
       def purl_pkg_for(_dependency)
         "hex"
-      end
-
-      sig { override.params(dependency: Dependabot::Dependency).returns(T::Array[String]) }
-      def fetch_subdependencies(dependency)
-        entry = graph_data.find { |candidate| candidate["purl"] == build_purl(dependency) }
-        return [] unless entry
-
-        T.cast(entry.fetch("dependencies"), T::Array[String]).map do |purl|
-          purl.delete_prefix("pkg:hex/").split("@", 2).first
-        end
       end
 
       private

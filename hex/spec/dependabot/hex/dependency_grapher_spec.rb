@@ -78,6 +78,72 @@ RSpec.describe Dependabot::Hex::DependencyGrapher do
     let(:plug) { dependency_for.call("plug", "1.3.5") }
     let(:poison) { dependency_for.call("poison", "2.0.1") }
 
+    context "when the graph provides a qualified PURL" do
+      let(:qualified_purl) { "pkg:hex/plug@1.3.5#{purl_suffix}" }
+      let(:plug_dependency) do
+        Dependabot::Dependency.new(
+          name: "plug",
+          version: "1.3.5",
+          requirements: [{ requirement: "~> 1.3", file: "mix.exs", groups: [], source: nil }],
+          package_manager: "hex"
+        )
+      end
+      let(:graph_data) do
+        [{
+          "purl" => qualified_purl,
+          "direct" => false,
+          "runtime" => false,
+          "dependencies" => [child_purl]
+        }]
+      end
+      let(:child_purl) { "pkg:hex/mime@1.2.0?checksum=sha256:def456#lib/mime" }
+
+      before do
+        allow(parser).to receive(:parse).and_return([plug_dependency])
+        allow(Dependabot::SharedHelpers).to receive(:run_helper_subprocess).and_return(graph_data)
+      end
+
+      shared_examples "a preserved qualified PURL" do
+        it "maps the complete graph entry to the resolved dependency" do
+          expect(resolved.keys).to eq([qualified_purl])
+          expect(resolved.fetch(qualified_purl)).to have_attributes(
+            package_url: qualified_purl,
+            direct: false,
+            runtime: false,
+            dependencies: [child_purl]
+          )
+        end
+      end
+
+      context "with query parameters" do
+        let(:purl_suffix) { "?checksum=sha256:abc123&download_url=https:%2F%2Frepo.hex.pm%2Fplug.tar" }
+
+        it_behaves_like "a preserved qualified PURL"
+      end
+
+      context "with a fragment" do
+        let(:purl_suffix) { "#lib/plug" }
+
+        it_behaves_like "a preserved qualified PURL"
+      end
+
+      context "with query parameters and a fragment" do
+        let(:purl_suffix) { "?checksum=sha256:abc123#lib/plug" }
+
+        it_behaves_like "a preserved qualified PURL"
+      end
+    end
+
+    context "when the graph is empty" do
+      before do
+        allow(Dependabot::SharedHelpers).to receive(:run_helper_subprocess).and_return([])
+      end
+
+      it "returns no resolved dependencies" do
+        expect(resolved).to be_empty
+      end
+    end
+
     it "returns the correct number of dependencies" do
       expect(resolved.count).to eq(5)
     end
